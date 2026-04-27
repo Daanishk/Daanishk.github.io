@@ -879,7 +879,7 @@
 
   <p>Two things, really.</p>
 
-  <p>First, GPUs are built to do exactly this. Drawing millions of simple shapes — triangles, sprites, blobs — fast and in parallel is the literal job description of every consumer GPU from the last twenty years of video games. Neural networks fight this hardware: they're matrix-multiplication machines being asked to roleplay as renderers, and even the fastest NeRF variants spend most of their time on tiny, scattered network evaluations that don't map cleanly to GPU strengths. Splatting plays to the hardware's natural rhythm.</p>
+  <p>First, GPUs are built to do exactly this. Drawing millions of simple shapes — triangles, sprites, blobs — fast and in parallel is the literal job description of every consumer GPU from the last twenty years of video games. Neural networks fight this hardware: they're matrix-multiplication machines. Splatting plays to the hardware's natural rhythm.</p>
 
   <p>Second, the explicit representation skips the empty-space problem. NeRFs evaluate their network at hundreds of points along every ray, including all the points that turn out to be empty air. Splatting only touches the blobs that exist. In a typical outdoor scene, the optimization concentrates blobs on actual surfaces and leaves the empty volumes empty. There's nothing to evaluate where there's nothing there.</p>
 
