@@ -1,0 +1,1044 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Blob That Ate the Neural Network</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;0,9..144,800;0,9..144,900;1,9..144,400;1,9..144,600;1,9..144,700&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,700;1,6..72,400;1,6..72,500&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #0f0d0a;
+    --ink-soft: #1a1612;
+    --paper: #f5f0e6;
+    --paper-warm: #ede4d3;
+    --cream: #faf6ed;
+    --moss: #5a7a4f;
+    --moss-deep: #3a5a40;
+    --moss-darker: #2a4030;
+    --ochre: #b8860b;
+    --ochre-warm: #a06823;
+    --rust: #c47a6e;
+    --slate: #6b8fa5;
+    --splat-1: rgba(90, 122, 79, 0.45);
+    --splat-2: rgba(184, 150, 90, 0.40);
+    --splat-3: rgba(196, 122, 110, 0.38);
+    --splat-4: rgba(107, 143, 165, 0.42);
+    --splat-5: rgba(217, 152, 130, 0.35);
+    --splat-6: rgba(237, 228, 211, 0.30);
+    --splat-7: rgba(160, 104, 35, 0.40);
+    --splat-8: rgba(74, 103, 65, 0.50);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--paper);
+    color: var(--ink-soft);
+    font-family: 'Newsreader', Georgia, serif;
+    font-size: clamp(17px, 1.15vw + 14px, 20px);
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden;
+  }
+
+  /* ---------- HERO ---------- */
+  .hero {
+    position: relative;
+    min-height: 92vh;
+    background: radial-gradient(ellipse at 30% 40%, #1f1a14 0%, var(--ink) 70%);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: clamp(1.5rem, 3vw, 3rem) clamp(1.5rem, 5vw, 5rem);
+    color: var(--cream);
+  }
+
+  .splat-field { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+
+  .splat {
+    /* Animated softly across the hero. Each splat keeps its own rotation via --r. */
+    position: absolute;
+    border-radius: 50%;
+    mix-blend-mode: screen;
+    will-change: transform, opacity;
+    filter: blur(2px);
+  }
+
+  .s1  { top:  8%; left:  5%; width: 380px; height: 220px;
+         background: radial-gradient(ellipse at center, var(--splat-1), transparent 65%);
+         --r: -15deg;
+         animation: drift1 6s ease-in-out infinite, breathe 4s ease-in-out infinite; }
+  .s2  { top: 15%; left: 28%; width: 280px; height: 420px;
+         background: radial-gradient(ellipse at center, var(--splat-2), transparent 65%);
+         --r: 25deg;
+         animation: drift2 5.5s ease-in-out infinite, breathe 4.5s ease-in-out infinite -3s; }
+  .s3  { top: 40%; left: 60%; width: 480px; height: 260px;
+         background: radial-gradient(ellipse at center, var(--splat-8), transparent 65%);
+         --r: -8deg;
+         animation: drift3 7s ease-in-out infinite -5s, breathe 5s ease-in-out infinite -7s; }
+  .s4  { top:  5%; left: 70%; width: 320px; height: 200px;
+         background: radial-gradient(ellipse at center, var(--splat-4), transparent 65%);
+         --r: 40deg;
+         animation: drift1 6.5s ease-in-out infinite -8s, breathe 4s ease-in-out infinite -2s; }
+  .s5  { top: 65%; left:  8%; width: 420px; height: 280px;
+         background: radial-gradient(ellipse at center, var(--splat-7), transparent 65%);
+         --r: -30deg;
+         animation: drift2 6.5s ease-in-out infinite -12s, breathe 4.5s ease-in-out infinite -5s; }
+  .s6  { top: 70%; left: 45%; width: 340px; height: 220px;
+         background: radial-gradient(ellipse at center, var(--splat-3), transparent 65%);
+         --r: 15deg;
+         animation: drift3 6s ease-in-out infinite -3s, breathe 5s ease-in-out infinite -9s; }
+  .s7  { top: 55%; left: 80%; width: 260px; height: 380px;
+         background: radial-gradient(ellipse at center, var(--splat-5), transparent 65%);
+         --r: -20deg;
+         animation: drift1 7s ease-in-out infinite -6s, breathe 4.5s ease-in-out infinite -4s; }
+  .s8  { top: 25%; left: 45%; width: 220px; height: 320px;
+         background: radial-gradient(ellipse at center, var(--splat-6), transparent 65%);
+         --r: 50deg;
+         animation: drift2 5.5s ease-in-out infinite -9s, breathe 5s ease-in-out infinite -6s; }
+  .s9  { top: 80%; left: 25%; width: 300px; height: 180px;
+         background: radial-gradient(ellipse at center, var(--splat-1), transparent 65%);
+         --r: 10deg;
+         animation: drift3 6.5s ease-in-out infinite -11s, breathe 4s ease-in-out infinite -3s; }
+  .s10 { top: 30%; left:  0%; width: 240px; height: 160px;
+         background: radial-gradient(ellipse at center, var(--splat-7), transparent 65%);
+         --r: -45deg;
+         animation: drift1 7.5s ease-in-out infinite -14s, breathe 5.5s ease-in-out infinite -8s; }
+  .s11 { top: 50%; left: 35%; width: 200px; height: 280px;
+         background: radial-gradient(ellipse at center, var(--splat-2), transparent 65%);
+         --r: 60deg;
+         animation: drift2 6.5s ease-in-out infinite -7s, breathe 4.5s ease-in-out infinite -10s; }
+  .s12 { top:  0%; left: 50%; width: 360px; height: 240px;
+         background: radial-gradient(ellipse at center, var(--splat-8), transparent 65%);
+         --r: -25deg;
+         animation: drift3 7s ease-in-out infinite -4s, breathe 4s ease-in-out infinite -1s; }
+  .s13 { top: 85%; left: 65%; width: 280px; height: 180px;
+         background: radial-gradient(ellipse at center, var(--splat-4), transparent 65%);
+         --r: 35deg;
+         animation: drift1 5.5s ease-in-out infinite -10s, breathe 4s ease-in-out infinite -7s; }
+  .s14 { top: 12%; left: 88%; width: 220px; height: 260px;
+         background: radial-gradient(ellipse at center, var(--splat-3), transparent 65%);
+         --r: -10deg;
+         animation: drift2 6.5s ease-in-out infinite -2s, breathe 5s ease-in-out infinite -6s; }
+  .s15 { top: 45%; left: 15%; width: 180px; height: 240px;
+         background: radial-gradient(ellipse at center, var(--splat-5), transparent 65%);
+         --r: 20deg;
+         animation: drift3 6s ease-in-out infinite -13s, breathe 4.5s ease-in-out infinite -2s; }
+
+  @keyframes drift1 {
+    0%, 100% { transform: translate(0, 0) rotate(var(--r, 0deg)); }
+    50%      { transform: translate(70px, -45px) rotate(calc(var(--r, 0deg) + 10deg)); }
+  }
+  @keyframes drift2 {
+    0%, 100% { transform: translate(0, 0) rotate(var(--r, 0deg)); }
+    50%      { transform: translate(-65px, 55px) rotate(calc(var(--r, 0deg) - 8deg)); }
+  }
+  @keyframes drift3 {
+    0%, 100% { transform: translate(0, 0) rotate(var(--r, 0deg)); }
+    50%      { transform: translate(50px, 65px) rotate(calc(var(--r, 0deg) + 7deg)); }
+  }
+  @keyframes breathe {
+    0%, 100% { opacity: 0.7; }
+    50%      { opacity: 1.0; }
+  }
+
+  /* ---------- HERO CONTENT ---------- */
+  .hero-content {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: calc(92vh - 6rem);
+    justify-content: space-between;
+  }
+
+  .masthead {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: rgba(245, 240, 230, 0.65);
+  }
+
+  .masthead .brand {
+    font-family: 'Fraunces', serif;
+    font-weight: 900;
+    font-style: italic;
+    font-size: 1.4rem;
+    letter-spacing: -0.02em;
+    text-transform: none;
+    color: var(--cream);
+  }
+
+  .masthead .meta { display: flex; gap: 1.5rem; }
+
+  .masthead .meta span::before {
+    content: "▸ ";
+    color: var(--ochre);
+    margin-right: 0.3em;
+  }
+
+  .headline-block { max-width: 1100px; margin-top: auto; }
+
+  .kicker {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.78rem;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--ochre);
+    margin-bottom: 1.5rem;
+  }
+
+  h1.headline {
+    font-family: 'Fraunces', serif;
+    font-weight: 900;
+    font-size: clamp(3rem, 8.5vw, 8.5rem);
+    line-height: 0.92;
+    letter-spacing: -0.035em;
+    margin-bottom: 1.8rem;
+    color: var(--cream);
+    font-variation-settings: "opsz" 144, "SOFT" 30;
+  }
+
+  h1.headline .accent {
+    font-style: italic;
+    font-weight: 600;
+    color: var(--ochre);
+    font-variation-settings: "opsz" 144, "SOFT" 100;
+  }
+
+  .dek {
+    font-family: 'Newsreader', serif;
+    font-style: italic;
+    font-weight: 400;
+    font-size: clamp(1.15rem, 1.6vw + 0.5rem, 1.7rem);
+    line-height: 1.4;
+    max-width: 780px;
+    color: rgba(245, 240, 230, 0.88);
+    margin-bottom: 2.5rem;
+  }
+
+  .byline {
+    display: flex;
+    align-items: center;
+    gap: 1.2rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: rgba(245, 240, 230, 0.6);
+  }
+
+  .byline .author { color: var(--cream); font-weight: 700; }
+  .byline .divider { width: 1px; height: 14px; background: rgba(245, 240, 230, 0.3); }
+
+  /* ---------- ARTICLE BODY ---------- */
+  .article {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: clamp(3rem, 8vw, 7rem) clamp(1.5rem, 4vw, 2rem) 4rem;
+    position: relative;
+  }
+
+  .article p { margin-bottom: 1.4rem; text-wrap: pretty; }
+
+  .article p.lead {
+    font-size: clamp(1.2rem, 0.4vw + 1.1rem, 1.4rem);
+    line-height: 1.55;
+    margin-bottom: 2rem;
+  }
+
+  .dropcap {
+    float: left;
+    font-family: 'Fraunces', serif;
+    font-weight: 900;
+    font-style: italic;
+    font-size: 5.5rem;
+    line-height: 0.85;
+    padding: 0.3rem 0.6rem 0 0;
+    margin: 0.1rem 0.1rem -0.2rem 0;
+    color: var(--moss-deep);
+    font-variation-settings: "opsz" 144;
+    background: linear-gradient(135deg, var(--moss-deep) 0%, var(--moss) 50%, var(--ochre-warm) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  /* Section headings */
+  h2.section-title {
+    font-family: 'Fraunces', serif;
+    font-weight: 800;
+    font-size: clamp(1.8rem, 1vw + 1.5rem, 2.6rem);
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    color: var(--ink);
+    margin: 4rem 0 1.5rem;
+    font-variation-settings: "opsz" 144, "SOFT" 50;
+    position: relative;
+  }
+
+  h2.section-title .number {
+    display: block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.22em;
+    font-weight: 500;
+    color: var(--ochre);
+    text-transform: uppercase;
+    margin-bottom: 0.8rem;
+    font-style: normal;
+  }
+
+  /* Splat divider */
+  .splat-divider {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.8rem;
+    margin: 3rem 0;
+    height: 30px;
+  }
+
+  .splat-divider .dot { border-radius: 50%; filter: blur(0.5px); }
+  .splat-divider .dot:nth-child(1) { width: 8px;  height: 6px;  background: var(--moss); opacity: 0.4; transform: rotate(-20deg); }
+  .splat-divider .dot:nth-child(2) { width: 14px; height: 10px; background: var(--moss-deep); opacity: 0.6; transform: rotate(15deg); }
+  .splat-divider .dot:nth-child(3) { width: 20px; height: 14px; background: var(--ochre-warm); opacity: 0.7; transform: rotate(-5deg); }
+  .splat-divider .dot:nth-child(4) { width: 14px; height: 10px; background: var(--rust); opacity: 0.5; transform: rotate(25deg); }
+  .splat-divider .dot:nth-child(5) { width: 8px;  height: 6px;  background: var(--moss); opacity: 0.4; transform: rotate(-15deg); }
+
+  /* Pull quote */
+  .pullquote {
+    margin: 3rem -1rem;
+    padding: 2rem 2rem 2rem 3rem;
+    position: relative;
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-weight: 400;
+    font-size: clamp(1.4rem, 1vw + 1rem, 1.9rem);
+    line-height: 1.35;
+    color: var(--ink);
+    border-left: 3px solid var(--ochre);
+  }
+
+  .pullquote::before {
+    content: ""; position: absolute; left: -8px; top: 1.5rem;
+    width: 24px; height: 16px;
+    background: radial-gradient(ellipse, var(--moss-deep), transparent 70%);
+    border-radius: 50%; transform: rotate(-15deg); opacity: 0.7;
+  }
+
+  .pullquote::after {
+    content: ""; position: absolute; left: -4px; bottom: 1.5rem;
+    width: 18px; height: 12px;
+    background: radial-gradient(ellipse, var(--ochre-warm), transparent 70%);
+    border-radius: 50%; transform: rotate(20deg); opacity: 0.7;
+  }
+
+  em { font-style: italic; }
+  strong { font-weight: 700; color: var(--ink); }
+
+  /* Use case rows */
+  .usecases { margin: 2rem 0; }
+
+  .usecase {
+    display: grid;
+    grid-template-columns: 140px 1fr;
+    gap: 1.5rem;
+    padding: 1.5rem 0;
+    border-top: 1px solid rgba(26, 22, 18, 0.12);
+  }
+  .usecase:last-child { border-bottom: 1px solid rgba(26, 22, 18, 0.12); }
+
+  .usecase .label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ochre-warm);
+    font-weight: 500;
+    padding-top: 0.3rem;
+  }
+
+  .usecase .body {
+    font-family: 'Newsreader', serif;
+    font-size: 1rem;
+    line-height: 1.55;
+  }
+
+  .usecase .body strong {
+    font-family: 'Fraunces', serif;
+    font-weight: 700;
+    font-style: italic;
+    font-size: 1.15rem;
+    display: block;
+    margin-bottom: 0.4rem;
+    color: var(--ink);
+  }
+
+  /* Figure / Diagram styling */
+  figure.diagram {
+    margin: 3.5rem -3rem;
+    padding: 2rem;
+    background: var(--cream);
+    border-radius: 4px;
+    box-shadow: 0 1px 0 rgba(26, 22, 18, 0.06), 0 20px 40px -20px rgba(26, 22, 18, 0.12);
+    position: relative;
+  }
+
+  figure.diagram .fig-svg { width: 100%; height: auto; display: block; }
+
+  figure.diagram figcaption {
+    margin-top: 1.5rem;
+    padding-top: 1.2rem;
+    border-top: 1px solid rgba(26, 22, 18, 0.12);
+  }
+
+  figure.diagram .fig-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--ochre);
+    font-weight: 500;
+    margin-bottom: 0.6rem;
+  }
+
+  figure.diagram .fig-title {
+    font-family: 'Fraunces', serif;
+    font-weight: 700;
+    font-size: 1.05rem;
+    line-height: 1.3;
+    color: var(--ink);
+    margin-bottom: 0.5rem;
+    font-variation-settings: "opsz" 36;
+  }
+
+  figure.diagram .fig-text {
+    font-family: 'Newsreader', serif;
+    font-size: 0.9rem;
+    line-height: 1.55;
+    color: rgba(26, 22, 18, 0.75);
+    font-style: italic;
+  }
+
+  figure.diagram .fig-credit {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgba(26, 22, 18, 0.4);
+    margin-top: 0.6rem;
+  }
+
+  .fig-svg text {
+    font-family: 'JetBrains Mono', monospace;
+    fill: var(--ink-soft);
+  }
+
+  /* ---------- FOOTER ---------- */
+  .footer {
+    background: var(--ink);
+    color: rgba(245, 240, 230, 0.6);
+    padding: 4rem clamp(1.5rem, 5vw, 5rem) 3rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .footer-content {
+    max-width: 720px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 2;
+  }
+
+  .footer .source {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    margin-bottom: 1.5rem;
+    color: var(--ochre);
+  }
+
+  .footer p {
+    font-family: 'Newsreader', serif;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    margin-bottom: 1rem;
+  }
+
+  .footer .signoff {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-weight: 600;
+    font-size: 1.3rem;
+    color: var(--cream);
+    margin-top: 2rem;
+  }
+
+  .footer-splat {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(3px);
+    mix-blend-mode: screen;
+  }
+  .fs1 { bottom: -100px; left: -50px; width: 400px; height: 250px;
+         background: radial-gradient(ellipse, var(--splat-8), transparent 65%);
+         transform: rotate(-15deg); }
+  .fs2 { top: -80px; right: -80px; width: 350px; height: 220px;
+         background: radial-gradient(ellipse, var(--splat-7), transparent 65%);
+         transform: rotate(20deg); }
+
+  /* ---------- RESPONSIVE ---------- */
+  @media (max-width: 900px) {
+    figure.diagram { margin: 3rem 0; }
+  }
+
+  @media (max-width: 640px) {
+    .hero { min-height: 88vh; padding: 1.2rem 1.2rem; }
+    .masthead .meta { display: none; }
+    h1.headline { font-size: clamp(2.4rem, 11vw, 3.5rem); letter-spacing: -0.03em; }
+    .splat { filter: blur(1px); }
+    .splat-field .splat { scale: 0.7; }
+    .article { padding: 3rem 1.5rem 3rem; }
+    .pullquote { margin: 2rem 0; padding: 1.5rem 1rem 1.5rem 2rem; }
+    .dropcap { font-size: 4.2rem; }
+    figure.diagram { margin: 2.5rem 0; padding: 1.2rem; }
+    .usecase { grid-template-columns: 1fr; gap: 0.5rem; }
+  }
+/* 
+  @media (prefers-reduced-motion: reduce) {
+    .splat { animation: none !important; }
+  } */
+</style>
+</head>
+<body>
+
+<!-- ============== HERO ============== -->
+<section class="hero">
+  <div class="splat-field" aria-hidden="true">
+    <div class="splat s1"></div><div class="splat s2"></div><div class="splat s3"></div>
+    <div class="splat s4"></div><div class="splat s5"></div><div class="splat s6"></div>
+    <div class="splat s7"></div><div class="splat s8"></div><div class="splat s9"></div>
+    <div class="splat s10"></div><div class="splat s11"></div><div class="splat s12"></div>
+    <div class="splat s13"></div><div class="splat s14"></div><div class="splat s15"></div>
+  </div>
+
+  <div class="hero-content">
+    <div class="masthead">
+      <div class="brand">Wired<span style="color: var(--ochre);">.</span></div>
+      <div class="meta">
+        <span>Vol. 34 · No. 04</span>
+        <span>April 27, 2026</span>
+      </div>
+    </div>
+
+    <div class="headline-block">
+      <div class="kicker">Computer Graphics // The Reversal</div>
+      <h1 class="headline">
+        The Blob That <span class="accent">Ate</span><br>
+        the Neural Network
+      </h1>
+      <p class="dek">
+        Three years ago, four researchers in France made a contrarian bet against
+        the entire AI consensus. Now their fuzzy 3D blobs are running the Olympics,
+        Hollywood, and your phone.
+      </p>
+      <div class="byline">
+        <span class="author">By Daanish Khan</span>
+        <span class="divider"></span>
+        <span>12 min read</span>
+        <span class="divider"></span>
+        <span>Issue 34.04</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============== ARTICLE BODY ============== -->
+<article class="article">
+
+  <p class="lead"><span class="dropcap">I</span>n August 2023, four researchers published a fourteen-page paper at SIGGRAPH that did something the deep-learning community had spent five years insisting was impossible. Their method produced photoreal 3D scenes from ordinary photographs, in real time, on a single consumer GPU — without using a neural network as the scene model.</p>
+
+  <p>The technique is called <em>3D Gaussian Splatting</em>. By early 2026 it has become the default approach to high-fidelity 3D capture: it's shipping in Hollywood VFX pipelines, Olympic broadcasts, real-estate platforms, and the universal 3D file formats used by Pixar, Apple, and NVIDIA. A follow-up paper this year, <em>FastGS</em>, has dragged training time from forty minutes down to one hundred seconds. One industry analyst recently described the moment as the JPEG moment for spatial computing — the point at which a piece of plumbing becomes ubiquitous enough to disappear into the background.</p>
+
+  <p>The original paper, by Bernhard Kerbl, Georgios Kopanas, Thomas Leimkühler, and George Drettakis of Inria and the Max Planck Institute, came out of nowhere. This is the story of how it works, why it caught the field off guard, and what it has built in the three years since.</p>
+
+  <!-- ============== § THE PROBLEM ============== -->
+  <h2 class="section-title"><span class="number">§ 01 // The Problem</span>Photographs in, 3D world out</h2>
+
+  <p>The technical name is <em>novel view synthesis</em>. The pitch is simpler: take a few dozen photos of a place, get back a fully 3D version of it that you can fly through from any angle. A garden, a film set, an archaeological dig, an apartment listing. Until recently, this was hard.</p>
+
+  <p>The hard part isn't the photos — modern phones have plenty of resolution. The hard part is reconstructing the 3D structure that lies behind them: where every surface is, how it reflects light, what's behind what, what fills the gaps the camera never saw. Traditional photogrammetry — the technology behind Google Earth's 3D buildings — builds polygonal meshes, flat triangles glued together to approximate surfaces. Meshes render fast, but they're bad at the things meshes are bad at: hair, foliage, smoke, glass, anything fuzzy or semi-transparent. They also need to be told that an object exists. Cars and buildings get reconstructed; a leaf trembling on a branch usually does not.</p>
+
+  <p>In 2020, a team at UC Berkeley proposed a radically different approach.</p>
+
+  <div class="splat-divider" aria-hidden="true">
+    <div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
+  </div>
+
+  <!-- ============== § THE INCUMBENT ============== -->
+  <h2 class="section-title"><span class="number">§ 02 // The Incumbent</span>NeRFs, and what they cost</h2>
+
+  <p>Their idea was the <em>Neural Radiance Field</em>, or NeRF, and it was almost belligerently in tune with the spirit of the AI moment. Instead of building an explicit 3D model, you trained a small neural network to memorize the scene. The network's only job was to answer one question: given a point in space and a viewing direction, what color is it, and how transparent? To render a new view, you fired thousands of imaginary rays through each pixel of your virtual camera and asked the network to evaluate the color along each one. Sum the answers. There's your image.</p>
+
+  <p>NeRFs worked beautifully. They captured fuzz, transparency, and view-dependent reflections that meshes could not touch. They also took up to forty-eight hours to train a single scene and rendered the result at roughly fourteen seconds per frame. The reigning champion in 2023, a Google method called Mip-NeRF360, produced photoreal stills that were essentially impossible to navigate interactively.</p>
+
+  <p>The community spent the next three years racing to make NeRFs faster. <em>InstantNGP</em>, from NVIDIA, used a hash table to skip much of the neural-network cost. <em>Plenoxels</em>, from Berkeley, swapped the network out for a sparse voxel grid. Both got training down to minutes and rendering up to about ten frames per second — faster, but still nowhere near the thirty-frame threshold for real-time interaction at 1080p, and at the cost of visual quality.</p>
+
+  <p>The Inria team's response was to ask whether the neural network needed to be there at all.</p>
+
+  <!-- ============== § HOW IT WORKS ============== -->
+  <h2 class="section-title"><span class="number">§ 03 // How It Works</span>A scene as a swarm of blobs</h2>
+
+  <p>Their replacement is conceptually simple. A scene is just a cloud of fuzzy, semi-transparent, stretched 3D blobs — Gaussians — each carrying a few stored properties:</p>
+
+  <p><strong>Position</strong> in 3D space. <strong>Shape</strong>, expressed as an ellipsoid that can rotate and stretch along each axis. <strong>Color</strong>, with view-dependent variation so reflections work. And <strong>opacity</strong>, controlling how solid or transparent the blob is. To render a new view, the algorithm projects each blob onto the screen, sorts them by depth, and blends them back-to-front. There are no neural network evaluations during rendering. The whole thing is just drawing fuzzy ovals in the right order.</p>
+
+  <!-- DIAGRAM 1: Pipeline -->
+  <figure class="diagram">
+    <svg class="fig-svg" viewBox="0 0 900 280" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="#1a1612"/>
+        </marker>
+        <marker id="arrow-grad" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="#a06823"/>
+        </marker>
+        <radialGradient id="splatGrad1">
+          <stop offset="0%" stop-color="#5a7a4f" stop-opacity="0.9"/>
+          <stop offset="100%" stop-color="#5a7a4f" stop-opacity="0"/>
+        </radialGradient>
+        <radialGradient id="splatGrad2">
+          <stop offset="0%" stop-color="#a06823" stop-opacity="0.7"/>
+          <stop offset="100%" stop-color="#a06823" stop-opacity="0"/>
+        </radialGradient>
+      </defs>
+
+      <g transform="translate(20, 80)">
+        <rect x="0" y="0" width="120" height="100" rx="4" fill="#faf6ed" stroke="#1a1612" stroke-width="1.5"/>
+        <circle cx="25" cy="35" r="2" fill="#1a1612"/>
+        <circle cx="60" cy="20" r="2" fill="#1a1612"/>
+        <circle cx="85" cy="55" r="2" fill="#1a1612"/>
+        <circle cx="40" cy="65" r="2" fill="#1a1612"/>
+        <circle cx="95" cy="80" r="2" fill="#1a1612"/>
+        <circle cx="20" cy="80" r="2" fill="#1a1612"/>
+        <circle cx="70" cy="40" r="2" fill="#1a1612"/>
+        <circle cx="50" cy="50" r="2" fill="#1a1612"/>
+        <text x="60" y="125" text-anchor="middle" font-size="11" font-weight="500">SfM POINTS</text>
+        <text x="60" y="142" text-anchor="middle" font-size="9" fill="#666">sparse 3D cloud</text>
+      </g>
+
+      <line x1="150" y1="130" x2="195" y2="130" stroke="#1a1612" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+      <g transform="translate(200, 80)">
+        <rect x="0" y="0" width="140" height="100" rx="4" fill="#faf6ed" stroke="#1a1612" stroke-width="1.5"/>
+        <ellipse cx="35" cy="40" rx="22" ry="11" fill="url(#splatGrad1)" transform="rotate(-20 35 40)"/>
+        <ellipse cx="80" cy="55" rx="28" ry="14" fill="url(#splatGrad2)" transform="rotate(15 80 55)"/>
+        <ellipse cx="100" cy="30" rx="18" ry="9" fill="url(#splatGrad1)" transform="rotate(40 100 30)"/>
+        <ellipse cx="50" cy="75" rx="20" ry="10" fill="url(#splatGrad2)" transform="rotate(-10 50 75)"/>
+        <ellipse cx="110" cy="80" rx="16" ry="8" fill="url(#splatGrad1)" transform="rotate(30 110 80)"/>
+        <text x="70" y="125" text-anchor="middle" font-size="11" font-weight="500">3D GAUSSIANS</text>
+        <text x="70" y="142" text-anchor="middle" font-size="9" fill="#666">position, shape, color, α</text>
+      </g>
+
+      <line x1="350" y1="130" x2="395" y2="130" stroke="#1a1612" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+      <g transform="translate(400, 50)">
+        <rect x="0" y="0" width="150" height="60" rx="4" fill="#faf6ed" stroke="#1a1612" stroke-width="1.5"/>
+        <text x="75" y="28" text-anchor="middle" font-size="11" font-weight="500">PROJECTION</text>
+        <text x="75" y="46" text-anchor="middle" font-size="9" fill="#666">3D → 2D</text>
+        <rect x="0" y="80" width="150" height="60" rx="4" fill="#faf6ed" stroke="#1a1612" stroke-width="1.5"/>
+        <text x="75" y="108" text-anchor="middle" font-size="11" font-weight="500">DENSITY CONTROL</text>
+        <text x="75" y="125" text-anchor="middle" font-size="9" fill="#666">clone · split · cull</text>
+      </g>
+
+      <line x1="560" y1="130" x2="605" y2="130" stroke="#1a1612" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+      <g transform="translate(610, 80)">
+        <rect x="0" y="0" width="130" height="100" rx="4" fill="#faf6ed" stroke="#1a1612" stroke-width="1.5"/>
+        <g stroke="#1a1612" stroke-width="0.4" fill="none" opacity="0.5">
+          <line x1="20" y1="20" x2="20" y2="80"/><line x1="40" y1="20" x2="40" y2="80"/>
+          <line x1="60" y1="20" x2="60" y2="80"/><line x1="80" y1="20" x2="80" y2="80"/>
+          <line x1="100" y1="20" x2="100" y2="80"/>
+          <line x1="20" y1="20" x2="110" y2="20"/><line x1="20" y1="40" x2="110" y2="40"/>
+          <line x1="20" y1="60" x2="110" y2="60"/><line x1="20" y1="80" x2="110" y2="80"/>
+        </g>
+        <rect x="40" y="20" width="20" height="20" fill="#5a7a4f" opacity="0.4"/>
+        <rect x="60" y="40" width="20" height="20" fill="#a06823" opacity="0.4"/>
+        <text x="65" y="125" text-anchor="middle" font-size="11" font-weight="500">TILE RASTERIZER</text>
+        <text x="65" y="142" text-anchor="middle" font-size="9" fill="#666">sort · blend · α</text>
+      </g>
+
+      <line x1="750" y1="130" x2="795" y2="130" stroke="#1a1612" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+      <g transform="translate(800, 80)">
+        <rect x="0" y="0" width="80" height="100" rx="4" fill="#1a1612" stroke="#1a1612" stroke-width="1.5"/>
+        <ellipse cx="25" cy="35" rx="14" ry="7" fill="url(#splatGrad1)" transform="rotate(-20 25 35)"/>
+        <ellipse cx="50" cy="55" rx="18" ry="9" fill="url(#splatGrad2)" transform="rotate(15 50 55)"/>
+        <ellipse cx="60" cy="25" rx="12" ry="6" fill="url(#splatGrad1)" transform="rotate(40 60 25)"/>
+        <ellipse cx="35" cy="75" rx="14" ry="7" fill="url(#splatGrad2)" transform="rotate(-10 35 75)"/>
+        <text x="40" y="125" text-anchor="middle" font-size="11" font-weight="500">IMAGE</text>
+        <text x="40" y="142" text-anchor="middle" font-size="9" fill="#666">novel view</text>
+      </g>
+
+      <path d="M 850 200 Q 850 240 600 240 Q 350 240 270 240 Q 270 200 270 195"
+            stroke="#a06823" stroke-width="1.2" stroke-dasharray="4 3" fill="none"
+            marker-end="url(#arrow-grad)"/>
+      <text x="540" y="258" text-anchor="middle" font-size="9" fill="#a06823" letter-spacing="2" font-weight="500">GRADIENT FLOW (BACKPROP)</text>
+    </svg>
+    <figcaption>
+      <div class="fig-label">Fig. 01 — Pipeline</div>
+      <div class="fig-title">From a sparse point cloud to a renderable scene</div>
+      <div class="fig-text">The forward pass (black) converts Gaussians into a 2D image. The backward pass (orange) carries gradients back through the differentiable rasterizer to update every blob's parameters and inform the density-control step, which decides where to add or remove Gaussians.</div>
+      <div class="fig-credit">After Kerbl et al. 2023, Fig. 2</div>
+    </figcaption>
+  </figure>
+
+  <p>The pipeline starts with the same input as a NeRF: a set of photos and the camera positions from which they were taken (recovered automatically by Structure-from-Motion software, the same algorithm that powers photogrammetry). Instead of training a neural network on these inputs, the algorithm uses the sparse 3D points that fall out of the SfM step — usually a few thousand — as initial blob positions.</p>
+
+  <p>What follows is an optimization loop. The algorithm renders the current set of blobs from one of the training viewpoints, compares the result to the actual photo, and uses the error to nudge every blob's position, shape, color, and opacity in the direction that would have made the image more correct. The whole rendering pipeline is <em>differentiable</em>, which is what makes this work — gradients can be backpropagated through the splatting step the same way they would be through a neural network layer.</p>
+
+  <!-- DIAGRAM 2: Anatomy of a splat -->
+  <figure class="diagram">
+    <svg class="fig-svg" viewBox="0 0 900 380" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <radialGradient id="g1"><stop offset="0%" stop-color="#5a7a4f" stop-opacity="0.85"/><stop offset="100%" stop-color="#5a7a4f" stop-opacity="0"/></radialGradient>
+        <radialGradient id="g2"><stop offset="0%" stop-color="#a06823" stop-opacity="0.75"/><stop offset="100%" stop-color="#a06823" stop-opacity="0"/></radialGradient>
+        <radialGradient id="g3"><stop offset="0%" stop-color="#c47a6e" stop-opacity="0.7"/><stop offset="100%" stop-color="#c47a6e" stop-opacity="0"/></radialGradient>
+        <radialGradient id="g4"><stop offset="0%" stop-color="#6b8fa5" stop-opacity="0.7"/><stop offset="100%" stop-color="#6b8fa5" stop-opacity="0"/></radialGradient>
+        <radialGradient id="g5"><stop offset="0%" stop-color="#3a5a40" stop-opacity="0.85"/><stop offset="100%" stop-color="#3a5a40" stop-opacity="0"/></radialGradient>
+      </defs>
+
+      <!-- LEFT: splat soup -->
+      <g>
+        <rect x="20" y="20" width="420" height="320" fill="#1a1612" rx="4"/>
+        <ellipse cx="120" cy="100" rx="55" ry="22" fill="url(#g1)" transform="rotate(-25 120 100)"/>
+        <ellipse cx="200" cy="80" rx="40" ry="20" fill="url(#g2)" transform="rotate(15 200 80)"/>
+        <ellipse cx="280" cy="120" rx="60" ry="25" fill="url(#g5)" transform="rotate(-10 280 120)"/>
+        <ellipse cx="350" cy="90" rx="35" ry="55" fill="url(#g3)" transform="rotate(40 350 90)"/>
+        <ellipse cx="100" cy="180" rx="45" ry="22" fill="url(#g4)" transform="rotate(20 100 180)"/>
+        <ellipse cx="180" cy="190" rx="50" ry="20" fill="url(#g1)" transform="rotate(-15 180 190)"/>
+        <ellipse cx="270" cy="200" rx="40" ry="30" fill="url(#g2)" transform="rotate(35 270 200)"/>
+        <ellipse cx="370" cy="190" rx="30" ry="60" fill="url(#g5)" transform="rotate(-30 370 190)"/>
+        <ellipse cx="80" cy="260" rx="55" ry="18" fill="url(#g3)" transform="rotate(10 80 260)"/>
+        <ellipse cx="170" cy="270" rx="40" ry="28" fill="url(#g1)" transform="rotate(-20 170 270)"/>
+        <ellipse cx="250" cy="280" rx="55" ry="22" fill="url(#g4)" transform="rotate(25 250 280)"/>
+        <ellipse cx="350" cy="270" rx="45" ry="35" fill="url(#g2)" transform="rotate(-5 350 270)"/>
+        <ellipse cx="60" cy="120" rx="35" ry="20" fill="url(#g5)" transform="rotate(50 60 120)"/>
+        <ellipse cx="400" cy="150" rx="25" ry="40" fill="url(#g3)" transform="rotate(15 400 150)"/>
+        <ellipse cx="220" cy="140" rx="30" ry="18" fill="url(#g4)" transform="rotate(60 220 140)"/>
+        <ellipse cx="320" cy="240" rx="38" ry="20" fill="url(#g1)" transform="rotate(-40 320 240)"/>
+        <text x="230" y="364" text-anchor="middle" font-size="10" font-weight="500" fill="#a06823" letter-spacing="2">~ 2 MILLION SPLATS PER SCENE</text>
+      </g>
+
+      <!-- RIGHT: anatomy -->
+      <g transform="translate(480, 0)">
+        <rect x="0" y="20" width="400" height="320" fill="#faf6ed" stroke="#1a1612" stroke-width="1" rx="4"/>
+        <ellipse cx="200" cy="180" rx="80" ry="32" fill="url(#g1)" transform="rotate(-20 200 180)" stroke="#3a5a40" stroke-width="1.2" stroke-dasharray="3 2"/>
+        <circle cx="200" cy="180" r="3" fill="#1a1612"/>
+
+        <line x1="200" y1="180" x2="80" y2="80" stroke="#1a1612" stroke-width="0.6"/>
+        <circle cx="80" cy="80" r="2" fill="#1a1612"/>
+        <text x="20" y="65" font-size="9" font-weight="500" letter-spacing="1.5">POSITION</text>
+        <text x="20" y="78" font-size="8" fill="#666">μ = (x, y, z)</text>
+
+        <line x1="270" y1="155" x2="350" y2="80" stroke="#1a1612" stroke-width="0.6"/>
+        <circle cx="350" cy="80" r="2" fill="#1a1612"/>
+        <text x="285" y="65" font-size="9" font-weight="500" letter-spacing="1.5">SHAPE</text>
+        <text x="285" y="78" font-size="8" fill="#666">3×3 covariance Σ</text>
+
+        <line x1="200" y1="180" x2="80" y2="290" stroke="#1a1612" stroke-width="0.6"/>
+        <circle cx="80" cy="290" r="2" fill="#1a1612"/>
+        <text x="20" y="310" font-size="9" font-weight="500" letter-spacing="1.5">COLOR</text>
+        <text x="20" y="323" font-size="8" fill="#666">spherical harmonics</text>
+
+        <line x1="270" y1="200" x2="350" y2="290" stroke="#1a1612" stroke-width="0.6"/>
+        <circle cx="350" cy="290" r="2" fill="#1a1612"/>
+        <text x="285" y="310" font-size="9" font-weight="500" letter-spacing="1.5">OPACITY</text>
+        <text x="285" y="323" font-size="8" fill="#666">α ∈ [0, 1]</text>
+      </g>
+
+      <text x="230" y="14" text-anchor="middle" font-size="10" font-weight="500" letter-spacing="2" fill="#666">A SCENE, MADE OF SPLATS</text>
+      <text x="680" y="14" text-anchor="middle" font-size="10" font-weight="500" letter-spacing="2" fill="#666">ANATOMY OF ONE SPLAT</text>
+    </svg>
+    <figcaption>
+      <div class="fig-label">Fig. 02 — Representation</div>
+      <div class="fig-title">A scene is just a few million ellipsoids with attributes</div>
+      <div class="fig-text">The Gaussians are anisotropic — they can stretch into long, thin shapes to align with surfaces. A tree branch becomes a few elongated splats running along its length, rather than dozens of round ones. Earlier point-based methods used spheres or discs; the move to ellipsoids let the algorithm represent fine geometry with a fraction of the primitives.</div>
+      <div class="fig-credit">After Kerbl et al. 2023, Fig. 3 (left); original schematic (right)</div>
+    </figcaption>
+  </figure>
+
+  <p>The Gaussians are <em>anisotropic</em>, meaning they can stretch into long, thin shapes to align with surfaces. This is one of the paper's quiet contributions. Earlier point-based rendering methods used spherical or disc-shaped primitives; the move to stretched ellipsoids lets the algorithm represent fine geometry — branches, wires, edges — with a small fraction of the primitives.</p>
+
+
+  <!-- DIAGRAM 3: Densification -->
+  <figure class="diagram">
+    <svg class="fig-svg" viewBox="0 0 800 440" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <radialGradient id="dg1"><stop offset="0%" stop-color="#5a7a4f" stop-opacity="0.85"/><stop offset="100%" stop-color="#5a7a4f" stop-opacity="0"/></radialGradient>
+        <radialGradient id="dg2"><stop offset="0%" stop-color="#a06823" stop-opacity="0.75"/><stop offset="100%" stop-color="#a06823" stop-opacity="0"/></radialGradient>
+        <marker id="arrow2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="#1a1612"/>
+        </marker>
+      </defs>
+
+      <!-- TOP: CLONE -->
+      <g>
+        <text x="20" y="35" font-size="10" font-weight="500" letter-spacing="2" fill="#a06823">CASE A — UNDER-RECONSTRUCTION</text>
+        <text x="20" y="52" font-size="14" font-weight="700" font-family="Fraunces, serif" font-style="italic" fill="#1a1612">CLONE the Gaussian</text>
+
+        <g transform="translate(20, 70)">
+          <rect x="0" y="0" width="220" height="120" fill="#faf6ed" stroke="#1a1612" stroke-width="1" rx="3"/>
+          <path d="M 30 50 Q 100 20 180 50 Q 190 70 180 80 Q 100 95 30 80 Z" fill="none" stroke="#c47a6e" stroke-width="1.5" stroke-dasharray="3 2"/>
+          <text x="125" y="35" text-anchor="middle" font-size="8" fill="#c47a6e" font-style="italic">missing geometry</text>
+          <ellipse cx="80" cy="65" rx="22" ry="12" fill="url(#dg1)" transform="rotate(-15 80 65)"/>
+          <text x="110" y="115" text-anchor="middle" font-size="9" fill="#666" letter-spacing="1">BEFORE</text>
+        </g>
+
+        <line x1="250" y1="130" x2="280" y2="130" stroke="#1a1612" stroke-width="1.5" marker-end="url(#arrow2)"/>
+        <text x="265" y="120" text-anchor="middle" font-size="8" fill="#666">clone</text>
+
+        <g transform="translate(290, 70)">
+          <rect x="0" y="0" width="220" height="120" fill="#faf6ed" stroke="#1a1612" stroke-width="1" rx="3"/>
+          <path d="M 30 50 Q 100 20 180 50 Q 190 70 180 80 Q 100 95 30 80 Z" fill="none" stroke="#c47a6e" stroke-width="1.5" stroke-dasharray="3 2"/>
+          <ellipse cx="70" cy="65" rx="22" ry="12" fill="url(#dg1)" transform="rotate(-15 70 65)"/>
+          <ellipse cx="130" cy="65" rx="22" ry="12" fill="url(#dg1)" transform="rotate(-15 130 65)"/>
+          <text x="110" y="115" text-anchor="middle" font-size="9" fill="#666" letter-spacing="1">AFTER</text>
+        </g>
+
+        <g transform="translate(540, 90)">
+          <text x="0" y="0" font-size="11" font-weight="500" letter-spacing="1" fill="#1a1612">Small splat,</text>
+          <text x="0" y="16" font-size="11" font-weight="500" letter-spacing="1" fill="#1a1612">large gradient.</text>
+          <text x="0" y="40" font-size="10" fill="#666" font-family="Newsreader, serif" font-style="italic">Make a copy and</text>
+          <text x="0" y="55" font-size="10" fill="#666" font-family="Newsreader, serif" font-style="italic">push it toward the</text>
+          <text x="0" y="70" font-size="10" fill="#666" font-family="Newsreader, serif" font-style="italic">missing geometry.</text>
+        </g>
+      </g>
+
+      <line x1="20" y1="225" x2="780" y2="225" stroke="#1a1612" stroke-width="0.5" opacity="0.2"/>
+
+      <!-- BOTTOM: SPLIT -->
+      <g transform="translate(0, 240)">
+        <text x="20" y="0" font-size="10" font-weight="500" letter-spacing="2" fill="#a06823">CASE B — OVER-RECONSTRUCTION</text>
+        <text x="20" y="17" font-size="14" font-weight="700" font-family="Fraunces, serif" font-style="italic" fill="#1a1612">SPLIT the Gaussian</text>
+
+        <g transform="translate(20, 35)">
+          <rect x="0" y="0" width="220" height="120" fill="#faf6ed" stroke="#1a1612" stroke-width="1" rx="3"/>
+          <path d="M 50 60 Q 70 40 90 60 Q 110 80 130 60 Q 150 40 170 60" fill="none" stroke="#c47a6e" stroke-width="1.5" stroke-dasharray="3 2"/>
+          <text x="110" y="35" text-anchor="middle" font-size="8" fill="#c47a6e" font-style="italic">fine detail</text>
+          <ellipse cx="110" cy="65" rx="60" ry="22" fill="url(#dg2)"/>
+          <text x="110" y="115" text-anchor="middle" font-size="9" fill="#666" letter-spacing="1">BEFORE</text>
+        </g>
+
+        <line x1="250" y1="95" x2="280" y2="95" stroke="#1a1612" stroke-width="1.5" marker-end="url(#arrow2)"/>
+        <text x="265" y="85" text-anchor="middle" font-size="8" fill="#666">split</text>
+
+        <g transform="translate(290, 35)">
+          <rect x="0" y="0" width="220" height="120" fill="#faf6ed" stroke="#1a1612" stroke-width="1" rx="3"/>
+          <path d="M 50 60 Q 70 40 90 60 Q 110 80 130 60 Q 150 40 170 60" fill="none" stroke="#c47a6e" stroke-width="1.5" stroke-dasharray="3 2"/>
+          <ellipse cx="78" cy="60" rx="28" ry="14" fill="url(#dg2)"/>
+          <ellipse cx="142" cy="60" rx="28" ry="14" fill="url(#dg2)"/>
+          <text x="110" y="115" text-anchor="middle" font-size="9" fill="#666" letter-spacing="1">AFTER</text>
+        </g>
+
+        <g transform="translate(540, 55)">
+          <text x="0" y="0" font-size="11" font-weight="500" letter-spacing="1" fill="#1a1612">Large splat,</text>
+          <text x="0" y="16" font-size="11" font-weight="500" letter-spacing="1" fill="#1a1612">large gradient.</text>
+          <text x="0" y="40" font-size="10" fill="#666" font-family="Newsreader, serif" font-style="italic">Replace with two</text>
+          <text x="0" y="55" font-size="10" fill="#666" font-family="Newsreader, serif" font-style="italic">smaller copies, each</text>
+          <text x="0" y="70" font-size="10" fill="#666" font-family="Newsreader, serif" font-style="italic">scaled down by 1.6×.</text>
+        </g>
+      </g>
+    </svg>
+    <figcaption>
+      <div class="fig-label">Fig. 03 — Adaptive Densification</div>
+      <div class="fig-title">The swarm grooms itself, every hundred iterations</div>
+      <div class="fig-text">Blobs whose gradients indicate they're in an under-reconstructed area get cloned and pushed toward the missing detail. Blobs that are too large for the geometry they're covering get split into two. Blobs that have faded to near-transparent get culled entirely. The swarm typically grows from a few thousand at initialization to one to five million by the end of training.</div>
+      <div class="fig-credit">After Kerbl et al. 2023, Fig. 4</div>
+    </figcaption>
+  </figure>
+
+  <p>Every hundred iterations, the algorithm grooms its swarm. Blobs whose gradient signals tell them they're in an under-reconstructed region — a piece of geometry that needs more detail — get <em>cloned</em>: a copy is made and nudged in the direction of greatest error. Blobs that are too large for the detail they're trying to cover get <em>split</em> into two smaller ones. Blobs that have faded to near-transparent through optimization get <em>culled</em>. The swarm starts at a few thousand and grows to between one and five million by the end of training, depending on scene complexity. The whole thing is less like training a neural network and more like a sculptor adding clay where it's needed and chiseling it away where it's not.</p>
+
+  <p>The final piece is the <em>rasterizer</em>: a custom GPU program written in CUDA that does the actual splatting. The screen is divided into 16×16 pixel tiles. For each frame, the GPU sorts every blob exactly once by depth (using radix sort, which is what GPUs are good at), then assigns each tile a list of the blobs that overlap it. Each tile is processed in parallel, blending its blobs front-to-back until the pixels saturate. This is the part that makes the whole thing real-time. The rasterizer is also fully differentiable, so gradients flow back through it during training.</p>
+
+  <!-- ============== § WHY IT'S FAST ============== -->
+  <h2 class="section-title"><span class="number">§ 04 // Why It's Fast</span>The hardware was always ready</h2>
+
+  <p>Two things, really.</p>
+
+  <p>First, GPUs are built to do exactly this. Drawing millions of simple shapes — triangles, sprites, blobs — fast and in parallel is the literal job description of every consumer GPU from the last twenty years of video games. Neural networks fight this hardware: they're matrix-multiplication machines being asked to roleplay as renderers, and even the fastest NeRF variants spend most of their time on tiny, scattered network evaluations that don't map cleanly to GPU strengths. Splatting plays to the hardware's natural rhythm.</p>
+
+  <p>Second, the explicit representation skips the empty-space problem. NeRFs evaluate their network at hundreds of points along every ray, including all the points that turn out to be empty air. Splatting only touches the blobs that exist. In a typical outdoor scene, the optimization concentrates blobs on actual surfaces and leaves the empty volumes empty. There's nothing to evaluate where there's nothing there.</p>
+
+  <div class="pullquote">
+    The team didn't reject machine learning. They rejected the idea that the scene itself needed to be a neural network. The blobs are just blobs. The optimization is what's smart.
+  </div>
+
+  <!-- DIAGRAM 4: Performance comparison -->
+  <figure class="diagram">
+    <svg class="fig-svg" viewBox="0 0 800 380" xmlns="http://www.w3.org/2000/svg">
+      <!-- Title -->
+      <text x="40" y="30" font-size="11" font-weight="500" letter-spacing="2" fill="#a06823">RENDERING SPEED — MIP-NERF360 SCENES</text>
+      <text x="40" y="48" font-size="10" fill="#666" font-style="italic" font-family="Newsreader, serif">Frames per second at 1080p, single A6000 GPU. Higher is better.</text>
+
+      <!-- Bars -->
+      <g transform="translate(180, 75)">
+        <!-- Mip-NeRF360: 0.06 fps -->
+        <g transform="translate(0, 0)">
+          <rect x="0" y="6" width="2" height="22" fill="#c47a6e"/>
+          <text x="-10" y="22" text-anchor="end" font-size="11" font-weight="500">Mip-NeRF360</text>
+          <text x="12" y="22" font-size="10" fill="#666" font-family="Newsreader, serif" font-style="italic">0.06 fps</text>
+        </g>
+        <!-- Plenoxels: 6.79 -->
+        <g transform="translate(0, 40)">
+          <rect x="0" y="6" width="22" height="22" fill="#6b8fa5"/>
+          <text x="-10" y="22" text-anchor="end" font-size="11" font-weight="500">Plenoxels</text>
+          <text x="32" y="22" font-size="10" fill="#666" font-family="Newsreader, serif" font-style="italic">6.79 fps</text>
+        </g>
+        <!-- InstantNGP-Big: 9.43 -->
+        <g transform="translate(0, 80)">
+          <rect x="0" y="6" width="32" height="22" fill="#6b8fa5"/>
+          <text x="-10" y="22" text-anchor="end" font-size="11" font-weight="500">InstantNGP</text>
+          <text x="42" y="22" font-size="10" fill="#666" font-family="Newsreader, serif" font-style="italic">9.43 fps</text>
+        </g>
+        <!-- 3DGS: 134 -->
+        <g transform="translate(0, 120)">
+          <rect x="0" y="6" width="446" height="22" fill="#3a5a40"/>
+          <text x="-10" y="22" text-anchor="end" font-size="11" font-weight="700">3D Gaussian Splatting</text>
+          <text x="456" y="22" font-size="11" fill="#3a5a40" font-weight="700" font-family="Newsreader, serif" font-style="italic">134 fps</text>
+        </g>
+      </g>
+
+      <!-- Divider -->
+      <line x1="40" y1="225" x2="760" y2="225" stroke="#1a1612" stroke-width="0.5" opacity="0.2"/>
+
+      <!-- Second chart: Training time -->
+      <text x="40" y="255" font-size="11" font-weight="500" letter-spacing="2" fill="#a06823">TRAINING TIME — SAME SCENES, SAME HARDWARE</text>
+      <text x="40" y="273" font-size="10" fill="#666" font-style="italic" font-family="Newsreader, serif">Lower is better. Note the log scale — Mip-NeRF360 takes 48 hours.</text>
+
+      <g transform="translate(180, 295)">
+        <!-- Mip-NeRF360: 48h = 2880 min -->
+        <g transform="translate(0, 0)">
+          <rect x="0" y="6" width="446" height="18" fill="#c47a6e"/>
+          <text x="-10" y="20" text-anchor="end" font-size="11" font-weight="500">Mip-NeRF360</text>
+          <text x="456" y="20" font-size="11" fill="#c47a6e" font-weight="700" font-family="Newsreader, serif" font-style="italic">48 hours</text>
+        </g>
+        <!-- 3DGS: 41 min -->
+        <g transform="translate(0, 30)">
+          <rect x="0" y="6" width="180" height="18" fill="#3a5a40"/>
+          <text x="-10" y="20" text-anchor="end" font-size="11" font-weight="700">3D Gaussian Splatting</text>
+          <text x="190" y="20" font-size="10" fill="#666" font-family="Newsreader, serif" font-style="italic">41 minutes</text>
+        </g>
+        <!-- FastGS: 100 sec -->
+        <g transform="translate(0, 60)">
+          <rect x="0" y="6" width="60" height="18" fill="#a06823"/>
+          <text x="-10" y="20" text-anchor="end" font-size="11" font-weight="500">FastGS (2026)</text>
+          <text x="70" y="20" font-size="10" fill="#666" font-family="Newsreader, serif" font-style="italic">100 seconds</text>
+        </g>
+      </g>
+    </svg>
+    <figcaption>
+      <div class="fig-label">Fig. 04 — Performance</div>
+      <div class="fig-title">A 1,900× speedup at rendering, a 70× speedup at training</div>
+      <div class="fig-text">3D Gaussian Splatting matches or slightly exceeds Mip-NeRF360's image quality (by SSIM and PSNR metrics) while training in under an hour and rendering in real time. The 2026 follow-up FastGS pulls training time down further, into the territory where capture-and-view becomes a single continuous workflow.</div>
+      <div class="fig-credit">Numbers from Kerbl et al. 2023, Table 1 (Mip-NeRF360 dataset); FastGS figures from Ren et al. 2025</div>
+    </figcaption>
+  </figure>
+
+  <p>The numbers from the original paper are stark. On the same scenes and hardware, Mip-NeRF360 takes forty-eight hours to train and renders at 0.07 frames per second. The Inria method matches its quality after about forty-one minutes of training and renders at 134 frames per second. That's roughly seventy times faster training and nineteen hundred times faster rendering — and slightly better visual quality, by the standard image-similarity metrics.</p>
+
+  <!-- ============== § USE CASES ============== -->
+  <h2 class="section-title"><span class="number">§ 05 // Now Shipping</span>Where the splats actually live</h2>
+
+  <p>What was a research result in August 2023 is now infrastructure. A non-exhaustive tour of the past eighteen months:</p>
+
+  <div class="usecases">
+    <div class="usecase">
+      <div class="label">Film & VFX</div>
+      <div class="body">
+        <strong>Hollywood pipelines</strong>
+        The Foundry's Nuke 17.0 — the compositing software that runs the visual-effects pipeline of nearly every major Hollywood production — added native Gaussian splat support in late 2025. OTOY's OctaneRender now does full path-traced splat rendering. <em>Superman</em> (2025) was the first major motion picture to ship with dynamic splats baked into its production pipeline, used for environment captures that were re-lit and re-framed in post.
+      </div>
+    </div>
+
+    <div class="usecase">
+      <div class="label">Live Broadcast</div>
+      <div class="body">
+        <strong>The 2026 Milan Olympics</strong>
+        The Games used splat-based virtual cameras for ski jumping, hockey, and figure skating broadcasts — putting viewers in vantage points no human cameraman could occupy. The captures happen in near-real-time during the event, then get streamed back into the broadcast feed.
+      </div>
+    </div>
+
+    <div class="usecase">
+      <div class="label">Real Estate</div>
+      <div class="body">
+        <strong>Smartphone walkthroughs</strong>
+        Zillow rolled out splat-based home tours through its SkyTours product. Apartments.com followed with exterior splat support via Matterport. The capture rig that used to require a $4,000 360-camera setup is now an agent walking through the house with a phone.
+      </div>
+    </div>
+
+    <div class="usecase">
+      <div class="label">Mobile & AR</div>
+      <div class="body">
+        <strong>Splats in your pocket</strong>
+        Mobile-GS, presented at ICLR 2026, runs full splat rendering on consumer phones at interactive framerates. Apple's Vision Pro got native splat support through the MetalSplatter library earlier this year. Apple's own SHARP system, also released this year, generates a complete 3D splat scene from a single photograph — meaning historical photos and product catalogs become explorable spaces.
+      </div>
+    </div>
+
+    <div class="usecase">
+      <div class="label">Standardization</div>
+      <div class="body">
+        <strong>The quietly consequential one</strong>
+        In February 2026, the Khronos Group — the consortium behind OpenGL and Vulkan — added KHR_gaussian_splatting as an extension to glTF 2.0, the universal 3D file format for the web. In March, the Alliance for OpenUSD (led by Pixar, Apple, NVIDIA, and Adobe) added Gaussian splats as a first-class type in OpenUSD, the format used across film, simulation, and digital twins. Once standardized, splats stop being a separate ecosystem and start being interoperable with every existing 3D pipeline.
+      </div>
+    </div>
+
+    <div class="usecase">
+      <div class="label">4D Capture</div>
+      <div class="body">
+        <strong>The next frontier: time</strong>
+        Several follow-up papers extend the technique to dynamic scenes — capturing not just spaces but performances, sports plays, surgical procedures. World Labs, which raised a billion dollars in 2025, ships a system called Marble that generates entire 3D environments from text prompts and exports them as splats.
+      </div>
+    </div>
+  </div>
+
+  <!-- ============== § THE LARGER POINT ============== -->
+  <h2 class="section-title"><span class="number">§ 06 // The Larger Point</span>What the blobs reveal</h2>
+
+  <p>It is tempting to read this story as "old beats new" and move on. That misses the actual lesson.</p>
+
+  <p>The Inria team didn't reject machine learning. They kept gradient descent, differentiable rendering, and the entire modern optimization toolkit. What they rejected was the assumption that the <em>scene itself</em> needed to be a neural network. The blobs are just blobs. The optimization is what's smart. The neural network was load-bearing for one specific job — interpolating colors along rays — and once you removed it and replaced it with explicit primitives that GPUs could draw natively, everything got faster, sharper, and smaller.</p>
+
+  <p>In a moment when the answer to most computing questions has become "add more parameters," that's a useful counterexample to keep in mind. The largest practical leap in 3D rendering since NeRFs came not from a bigger neural network but from someone willing to ask whether the neural network needed to be there at all.</p>
+
+
+</article>
+
+<!-- ============== FOOTER ============== -->
+<footer class="footer">
+  <div class="footer-splat fs1" aria-hidden="true"></div>
+  <div class="footer-splat fs2" aria-hidden="true"></div>
+
+  <div class="footer-content">
+    <div class="source">Source Material</div>
+    <p>Based on Kerbl, Kopanas, Leimkühler, and Drettakis, <em>3D Gaussian Splatting for Real-Time Radiance Field Rendering</em>, ACM Transactions on Graphics, Vol. 42, No. 4 (August 2023). The original paper, code, and trained models are available at the Inria GraphDeco group repository. Diagrams in this article are original schematics inspired by figures in the paper.</p>
+    <p>Industry context drawn from reporting on the 2026 standardization efforts at Khronos and the Alliance for OpenUSD, the FastGS paper (CVPR 2026), Mobile-GS (ICLR 2026), Apple's SHARP release, and trade coverage of splat adoption in film, broadcast, and real estate through Q1 2026.</p>
+    <p class="signoff">— 30 —</p>
+  </div>
+</footer>
+
+</body>
+</html>
